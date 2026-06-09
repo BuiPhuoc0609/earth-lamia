@@ -606,7 +606,27 @@ Ta thấy đã resolve được hết các imports, 13 apis lỗi trên là do s
 
 Dump:
 
-ta dùng ollydumpex để dump dll ra
+dùng ollydumpex để dump dll ra:
+
+<img width="1919" height="855" alt="ảnh" src="https://github.com/user-attachments/assets/06ac9f41-12de-40e3-855e-26406aedfd5e" />
+
+fix imports bằng scylla:
+
+<img width="723" height="800" alt="ảnh" src="https://github.com/user-attachments/assets/d4ed8673-2d7b-4972-9806-fae6c906c4c2" />
+
+kết quả:
+
+<img width="1919" height="855" alt="ảnh" src="https://github.com/user-attachments/assets/102482f9-66fd-49ca-952a-baa1f6ada379" />
+
+<img width="1919" height="853" alt="ảnh" src="https://github.com/user-attachments/assets/79193008-9fc9-4c28-87e3-05ec0ce9a061" />
+
+<img width="1919" height="854" alt="ảnh" src="https://github.com/user-attachments/assets/387047d6-7abc-4513-9531-6da1670be30b" />
+
+<img width="1919" height="856" alt="ảnh" src="https://github.com/user-attachments/assets/86af47cd-0f38-44a7-822d-5de38c49dc34" />
+
+DLL đã được unpack thành công
+
+tuy nhiên chương trình đã bị obfuscate
 
 
 
