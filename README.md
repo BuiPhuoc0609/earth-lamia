@@ -28,15 +28,7 @@ Bây giờ chương trình đã bypass antidebug và có thể debug bình thư�
 
 Tìm OEP: 
 
-Ta đã biết rằng USERENV.DLL là file pe tự compile nên ta có thể dựa vafp `GetSystemTimeAsFileTime` để tìm oep
-
-<img width="1919" height="537" alt="ảnh" src="https://github.com/user-attachments/assets/d56641ff-4318-498e-bbf2-3c4aa51822a3" />
-
-trỏ vào rsp để biết hàm nào đã gọi `GetSystemTimeAsFileTime`
-
-đặt breakpoint tại ret để lấy địa chỉ hàm đã gọi entrypoint
-
-<img width="1919" height="368" alt="ảnh" src="https://github.com/user-attachments/assets/69c8b464-0463-4a54-b3e1-e6374f68d1c2" />
+Ta đã biết rằng USERENV.DLL là file pe tự compile nên ta có thể đặt breakpoint ở `GetSystemTimeAsFileTime` để tìm oep
 
 <img width="1328" height="366" alt="ảnh" src="https://github.com/user-attachments/assets/c8c03a10-f197-4905-822e-e3da117dd09a" />
 
