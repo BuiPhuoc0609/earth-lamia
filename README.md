@@ -628,5 +628,55 @@ DLL đã được unpack thành công
 
 tuy nhiên chương trình đã bị obfuscate
 
+obfuscate1:
+
+<img width="926" height="482" alt="ảnh" src="https://github.com/user-attachments/assets/a923f8c2-78f2-41cc-8125-dd757f3a449e" />
+
+<img width="903" height="462" alt="ảnh" src="https://github.com/user-attachments/assets/2e37a702-ba7a-444e-9090-6218bc36e9fb" />
+
+<img width="579" height="335" alt="ảnh" src="https://github.com/user-attachments/assets/23c8ba51-4fee-4423-9d11-6c196be8e938" />
+
+ta thấy rằng chương trình sử dụng instruction `sub` để lấy flag nhằm thay đổi giá trị đầu ra của `jmp rax` để điều luồng chương trình 
+
+tuy thanh ghi có thể nhận các giá trị khác nhau nhưng kết quả của `sub` chỉ có một vài trường hợp cụ thể
+
+Ý tưởng:
+- tìm các lệnh `jmp rax`
+- lùi ngược lên cho đến khi gặp `sub reg_64, reg_64` hoặc `sub reg64, imm`
+- emulate và thử các trường hợp của `sub` (ví dụ > < =, âm,...) để lấy các giá trị đầu ra của `jmp rax`
+- căn cứ vào kết quả của các trường hợp ta nop hết các ins cũ và patch thành conditional jmp
+
+sau khi patch:
+
+<img width="1288" height="504" alt="ảnh" src="https://github.com/user-attachments/assets/9f170aa8-148a-40d8-b77b-4e54cc78fde5" />
+
+<img width="1148" height="511" alt="ảnh" src="https://github.com/user-attachments/assets/a8ae5b1c-75f9-4997-a4a7-dc4640898f0c" />
+
+
+obfuscate2:
+
+ở đây ta thấy dạng này khá quen:
+
+<img width="1919" height="859" alt="ảnh" src="https://github.com/user-attachments/assets/dc437bed-bb15-4ff7-a5ba-6ce5299e7b40" />
+
+<img width="1919" height="850" alt="ảnh" src="https://github.com/user-attachments/assets/093113b4-e047-4f17-8e6e-11a449597f80" />
+
+bên trái là chương trình ta vừa deobfuscate và bên phải là chương trình tự compile bằng ollvm
+
+dựa vào cách điều hướng luồng ta có thể thấy ta đã đưa được về dạng ollvm thông thường
+
+có thể dựa trên các script unflatening sẵn trên mạng để deob dạng này
+
+cơ chế là sắp xếp lại thứ tự thực thi của các block trong hàm
+
+kết quả:
+
+<img width="1522" height="490" alt="ảnh" src="https://github.com/user-attachments/assets/6d2b72c7-a7ce-4b23-b9c4-ea43f0525485" />
+
+obfuscate3:
+
+
+
+
 
 
