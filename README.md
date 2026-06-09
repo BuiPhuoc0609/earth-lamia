@@ -675,7 +675,26 @@ kết quả:
 
 obfuscate3:
 
+<img width="661" height="235" alt="ảnh" src="https://github.com/user-attachments/assets/7d287fa8-ac7a-4e57-86ac-f514c8053dce" />
 
+<img width="1100" height="246" alt="ảnh" src="https://github.com/user-attachments/assets/84fae7c3-566b-4f4d-88a2-0e8f6cae9ce1" />
+
+<img width="606" height="487" alt="ảnh" src="https://github.com/user-attachments/assets/6dc257b6-fe1e-480a-8a91-223dfcc4e1a9" />
+
+<img width="1515" height="477" alt="ảnh" src="https://github.com/user-attachments/assets/691c46cb-c252-4384-a576-258f6b9b44bc" />
+
+ta thấy rằng các ins như `mov reg_64, ptr [imm]`, `add reg_64, ptr [imm]`,... gây ida tạo mã giả không tự optimize và tính toán được địa chỉ đích do các biến global ở các vị trí khá xa và rời rạc 
+
+Ý tưởng:
+
+đối với `mov reg_64, ptr [imm]`:
+- tạo 1 section mới
+- tạo trampoline jmp đến section mới và mov thẳng giá trị tại ptr vào reg (với điều kiện là biến có giá trị chứ không phải là biến khởi tạo chỉ tồn tại trên mem) và jmp ngược trở lại ins sau
+
+đối với `add reg_64, ptr [imm]`:
+- do không có `add reg_64, imm64` nên ta lấy giá trị tại ptr ghi vào ngay sau trampoline để ida có thể đọc được giá trị tại ptr để gen pseudocode
+
+kết quả:
 
 
 
