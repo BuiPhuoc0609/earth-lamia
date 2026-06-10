@@ -683,18 +683,44 @@ obfuscate3:
 
 <img width="1515" height="477" alt="ảnh" src="https://github.com/user-attachments/assets/691c46cb-c252-4384-a576-258f6b9b44bc" />
 
-ta thấy rằng các ins như `mov reg_64, ptr [imm]`, `add reg_64, ptr [imm]`,... gây ida tạo mã giả không tự optimize và tính toán được địa chỉ đích do các biến global ở các vị trí khá xa và rời rạc 
+ta thấy rằng các ins như `mov reg_64, ptr [imm]`, `add reg_64, ptr [imm]`,... gây ida tạo mã giả không tự optimize và tính toán được địa chỉ đích do các biến global nằm ở section có quyền write -> tức ida cho rằng giá trị ở biến đó có thể bị thay đổi chứ không cố định nên không gom vào tính được
 
 Ý tưởng:
-
-đối với `mov reg_64, ptr [imm]`:
 - tạo 1 section mới
-- tạo trampoline jmp đến section mới và mov thẳng giá trị tại ptr vào reg (với điều kiện là biến có giá trị chứ không phải là biến khởi tạo chỉ tồn tại trên mem) và jmp ngược trở lại ins sau
-
-đối với `add reg_64, ptr [imm]`:
-- do không có `add reg_64, imm64` nên ta lấy giá trị tại ptr ghi vào ngay sau trampoline để ida có thể đọc được giá trị tại ptr để gen pseudocode
+- tìm tất cả các ins `mov reg_64, ptr [imm]`, `add reg_64, ptr [imm]`,...
+- xref các biến global đó xem có ins nào khác ngoài `mov reg_64, ptr [imm]`, `add reg_64, ptr [imm]`,... tác động tới nó không (tránh các ins write vào biến), nếu có thì bỏ qua
+- lấy giá trị tại biến đó và ghi vào section mới, đổi ins thành biến mới
 
 kết quả:
+
+<img width="1497" height="492" alt="ảnh" src="https://github.com/user-attachments/assets/bfdaebe1-a785-4387-84a7-d356360eb91d" />
+
+<img width="1254" height="491" alt="ảnh" src="https://github.com/user-attachments/assets/ca478878-773a-48c6-a11b-c3c9aaca7f3b" />
+
+obfuscate4:
+
+<img width="1531" height="474" alt="ảnh" src="https://github.com/user-attachments/assets/7e7893fa-d9ae-42c1-b3b7-68c0b5a2f3a4" />
+
+<img width="1534" height="502" alt="ảnh" src="https://github.com/user-attachments/assets/6ca53de6-931f-44bd-84c7-3f6ad01a5cb8" />
+
+ta đã biết rằng các biến unk trên xuất hiện sau khi ida đã tính toán giá trị nên nó không được sử dụng trực tiếp trên ins nên ta không thể dùng cách vừa rồi được
+
+Ý tưởng:
+- parse pseudocode tìm các dạng `unk_x + imm`, `unk_x - imm`
+- kiểm tra xem `unk_x` là biến đã khởi tạo và có giá trị chưa (tránh các biến chỉ có trên mem)
+- hook text pseudo code patch lại thành giá trị sau khi tính toán
+
+kết quả:
+
+<img width="1532" height="504" alt="ảnh" src="https://github.com/user-attachments/assets/35f95f68-e888-4170-a538-1d9cb839e900" />
+
+<img width="1527" height="508" alt="ảnh" src="https://github.com/user-attachments/assets/f69351f4-a274-4f3d-a8f7-34e079b86608" />
+
+như vậy cơ bản chương trình đã deob được khá ổn và có thể đọc được
+
+
+
+
 
 
 
