@@ -686,7 +686,7 @@ obfuscate3:
 ta thấy rằng các ins như `mov reg_64, ptr [imm]`, `add reg_64, ptr [imm]`,... gây ida tạo mã giả không tự optimize và tính toán được địa chỉ đích do các biến global nằm ở section có quyền write -> tức ida cho rằng giá trị ở biến đó có thể bị thay đổi chứ không cố định nên không gom vào tính được
 
 Ý tưởng:
-- tạo 1 section mới
+- tạo 1 section mới không có quyền write
 - tìm tất cả các ins `mov reg_64, ptr [imm]`, `add reg_64, ptr [imm]`,...
 - xref các biến global đó xem có ins nào khác ngoài `mov reg_64, ptr [imm]`, `add reg_64, ptr [imm]`,... tác động tới nó không (tránh các ins write vào biến), nếu có thì bỏ qua
 - lấy giá trị tại biến đó và ghi vào section mới, đổi ins thành biến mới
@@ -717,6 +717,18 @@ kết quả:
 <img width="1527" height="508" alt="ảnh" src="https://github.com/user-attachments/assets/f69351f4-a274-4f3d-a8f7-34e079b86608" />
 
 như vậy cơ bản chương trình đã deob được khá ổn và có thể đọc được
+
+Phân tích hành vi chương trình:
+
+ngoài DLLEntrypoint được gọi lúc load thư viện là malicious ra thì các exports khác hầu hết là forward  về userenv.dll gốc trong system32:
+
+<img width="1532" height="505" alt="ảnh" src="https://github.com/user-attachments/assets/ab638526-9ff3-4647-9f53-192d666d5b44" />
+
+<img width="1520" height="448" alt="ảnh" src="https://github.com/user-attachments/assets/38be7772-159d-4ce6-a620-7550d7c94e01" />
+
+
+DLLEntrypoint:
+
 
 
 
