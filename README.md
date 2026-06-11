@@ -1118,7 +1118,7 @@ oep:
 
 <img width="1328" height="451" alt="ảnh" src="https://github.com/user-attachments/assets/62e58b27-c589-40ff-9702-20c22d40486c" />
 
-
+dump ra file a.out.exe
 
 
 
