@@ -1185,10 +1185,13 @@ resume:
 
 <img width="945" height="476" alt="ảnh" src="https://github.com/user-attachments/assets/83cd3235-8706-404c-a986-9b541824a5fa" />
 
-phần chính của chương trình chủ yếu nằm tại `runtime_osinit`:
+logic chính của chương trình nằm trong `runtime_mstart`
 
+<img width="928" height="503" alt="ảnh" src="https://github.com/user-attachments/assets/5265508d-487e-423e-a772-fb4291badd05" />
 
+ta sẽ debug và trỏ vào `v7` để xem chương trình gọi các hàm nào
 
+chương trình gọi các hàm tại các offset: `0x3dea0`, `0x37be0`, `0x379c0`, 
 
 
 
