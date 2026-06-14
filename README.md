@@ -1138,6 +1138,29 @@ từ đây ta tìm đc main của chương trình:
 
 <img width="759" height="491" alt="ảnh" src="https://github.com/user-attachments/assets/20b7cb67-d786-4a34-be2b-4b7457c88ed3" />
 
+phân tích:
+
+<img width="772" height="296" alt="ảnh" src="https://github.com/user-attachments/assets/45c5d8d5-8832-48bd-b164-a668ccb4003b" />
+
+tại hàm `call_c_function` có hàm `runtime_cgocall` để gọi hàm C trong Go:
+
+<img width="1340" height="347" alt="ảnh" src="https://github.com/user-attachments/assets/90bb7fb3-9bcd-4cd7-8cb6-8ac20359387f" />
+
+args của hàm trỏ đến 1 reflective loader và 1 pe file:
+
+rax:
+
+<img width="1336" height="422" alt="ảnh" src="https://github.com/user-attachments/assets/071ca3d5-b746-4511-b93e-f779944f1f28" />
+
+rbx:
+
+<img width="1213" height="372" alt="ảnh" src="https://github.com/user-attachments/assets/77b1251d-8313-4d5e-912d-0d22f9b4fe01" />
+
+ta dump file pe ra bằng ollydumpex với option raw vì đây là file pe chưa map:
+
+<img width="825" height="767" alt="ảnh" src="https://github.com/user-attachments/assets/b46a42a8-e0b5-4a7e-a1ef-2eb7a14da177" />
+
+
 
 
 
