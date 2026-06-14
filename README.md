@@ -1120,6 +1120,24 @@ oep:
 
 dump ra file a.out.exe
 
+<img width="1034" height="530" alt="ảnh" src="https://github.com/user-attachments/assets/6b6eb4da-f4be-491c-a9d6-cf90094f64f0" />
+
+<img width="771" height="505" alt="ảnh" src="https://github.com/user-attachments/assets/10737170-c6b8-4232-8b72-71550fe2ea06" />
+
+đây là 1 file pe được build bằng golang nhưng đã bị stripped hết symbols và phiên bản
+
+ta sẽ dùng tính năng load flirt signature file để lấy một phần symbol các hàm của go từ 1 file pe golang ta tự build
+
+sau khi load sig:
+
+<img width="1919" height="833" alt="ảnh" src="https://github.com/user-attachments/assets/47c0c6a8-3941-4f80-9f98-a850bb678b21" />
+
+từ đây ta tìm đc main của chương trình:
+
+<img width="1529" height="521" alt="ảnh" src="https://github.com/user-attachments/assets/25fbd924-840e-445e-b7ab-0ce7e0076a31" />
+
+<img width="759" height="491" alt="ảnh" src="https://github.com/user-attachments/assets/20b7cb67-d786-4a34-be2b-4b7457c88ed3" />
+
 
 
 
