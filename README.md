@@ -1156,9 +1156,38 @@ rbx:
 
 <img width="1213" height="372" alt="ảnh" src="https://github.com/user-attachments/assets/77b1251d-8313-4d5e-912d-0d22f9b4fe01" />
 
-ta dump file pe ra bằng ollydumpex với option raw vì đây là file pe chưa map:
+ta dump file pe ra bằng ollydumpex với option raw vì đây là file pe chưa map
 
 <img width="825" height="767" alt="ảnh" src="https://github.com/user-attachments/assets/b46a42a8-e0b5-4a7e-a1ef-2eb7a14da177" />
+
+dll ta cũng lấy lại symbols go bằng cách load sig như trên
+
+<img width="1917" height="817" alt="ảnh" src="https://github.com/user-attachments/assets/88996409-ea76-4ca2-a254-5b0e643bb7b3" />
+
+
+thực tế DLLEntrypoint không có gì cả
+
+ta quay trở lại a.out.exe:
+
+<img width="1139" height="392" alt="ảnh" src="https://github.com/user-attachments/assets/0ee11d4c-e6a9-4ca5-88e9-acff80d9c2e6" />
+
+sau khi gọi xong `call_c_function` tức đã load pe và gọi DLLEntrypoint, ta break on access tại code section của dll đã load lên mem:
+
+<img width="1400" height="616" alt="ảnh" src="https://github.com/user-attachments/assets/3527c7bd-adfa-4c48-b847-bec76e0c3068" />
+
+resume:
+
+<img width="1331" height="461" alt="ảnh" src="https://github.com/user-attachments/assets/96ee7d55-ba7c-4a01-b564-4ee6dcc3152b" />
+
+<img width="1919" height="817" alt="ảnh" src="https://github.com/user-attachments/assets/ea895850-9fd9-49ec-8f5a-68a9be810560" />
+
+đây chính là hàm `_rt0_amd64_windows_lib_go` trong dll
+
+<img width="945" height="476" alt="ảnh" src="https://github.com/user-attachments/assets/83cd3235-8706-404c-a986-9b541824a5fa" />
+
+phần chính của chương trình chủ yếu nằm tại `runtime_osinit`:
+
+
 
 
 
