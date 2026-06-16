@@ -1160,38 +1160,14 @@ ta dump file pe ra bằng ollydumpex với option raw vì đây là file pe chư
 
 <img width="825" height="767" alt="ảnh" src="https://github.com/user-attachments/assets/b46a42a8-e0b5-4a7e-a1ef-2eb7a14da177" />
 
-dll ta cũng lấy lại symbols go bằng cách load sig như trên
+dll ta cũng lấy lại symbols go bằng cách load sig như trên, ngoài ra còn sử dụng GoReSym để lấy symbols từ metadata 
 
 <img width="1917" height="817" alt="ảnh" src="https://github.com/user-attachments/assets/88996409-ea76-4ca2-a254-5b0e643bb7b3" />
 
 
-thực tế DLLEntrypoint không có gì cả
 
-ta quay trở lại a.out.exe:
 
-<img width="1139" height="392" alt="ảnh" src="https://github.com/user-attachments/assets/0ee11d4c-e6a9-4ca5-88e9-acff80d9c2e6" />
 
-sau khi gọi xong `call_c_function` tức đã load pe và gọi DLLEntrypoint, ta break on access tại code section của dll đã load lên mem:
-
-<img width="1400" height="616" alt="ảnh" src="https://github.com/user-attachments/assets/3527c7bd-adfa-4c48-b847-bec76e0c3068" />
-
-resume:
-
-<img width="1331" height="461" alt="ảnh" src="https://github.com/user-attachments/assets/96ee7d55-ba7c-4a01-b564-4ee6dcc3152b" />
-
-<img width="1919" height="817" alt="ảnh" src="https://github.com/user-attachments/assets/ea895850-9fd9-49ec-8f5a-68a9be810560" />
-
-đây chính là hàm `_rt0_amd64_windows_lib_go` trong dll
-
-<img width="945" height="476" alt="ảnh" src="https://github.com/user-attachments/assets/83cd3235-8706-404c-a986-9b541824a5fa" />
-
-logic chính của chương trình nằm trong `runtime_mstart`
-
-<img width="928" height="503" alt="ảnh" src="https://github.com/user-attachments/assets/5265508d-487e-423e-a772-fb4291badd05" />
-
-ta sẽ debug và trỏ vào `v7` để xem chương trình gọi các hàm nào
-
-chương trình gọi các hàm tại các offset: `0x3dea0`, `0x37be0`, `0x379c0`, 
 
 
 
