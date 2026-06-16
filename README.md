@@ -1164,6 +1164,382 @@ dll ta cũng lấy lại symbols go bằng cách load sig như trên, ngoài ra 
 
 <img width="1917" height="817" alt="ảnh" src="https://github.com/user-attachments/assets/88996409-ea76-4ca2-a254-5b0e643bb7b3" />
 
+logic chính của chương trình nằm tại hàm `runtime_main`:
+
+```c
+__int64 __fastcall runtime_main()
+{
+  // [COLLAPSED LOCAL DECLARATIONS. PRESS NUMPAD "+" TO EXPAND]
+
+  v21 = 0LL;
+  v17 = 0;
+  v19 = *(_QWORD **)(v0 + 48);
+  *(_QWORD *)(*v19 + 320LL) = 0LL;
+  n1000000000 = 1000000000LL;
+  n2000000000 = 2000000000LL;
+  byte_66F57FC0 = 1;
+  runtime_systemstack(off_66D25B00);
+  v2 = *(_QWORD *)__readgsqword(n40);
+  ++*(_DWORD *)(*(_QWORD *)(v2 + 48) + 572LL);
+  *(_QWORD *)(*(_QWORD *)(v2 + 48) + 304LL) = v2;
+  *(_QWORD *)(v2 + 232) = *(_QWORD *)(v2 + 48);
+  v3 = qword_66F04620;
+  if ( v19 != qword_66F04620 )
+    goto LABEL_25;
+  runtime_nanotime1(qword_66F04620, v1);
+  v6 = *(_QWORD *)__readgsqword(n40);
+  qword_66F58260 = v15;
+  if ( !v15 )
+  {
+LABEL_24:
+    runtime_throw(v5, v4);
+LABEL_25:
+    runtime_throw(v3, v1);
+    return runtime_deferreturn();
+  }
+  if ( dword_66F588AC )
+  {
+    qword_66F58628 = *(_QWORD *)(v6 + 152);
+    byte_66F58620 = 1;
+  }
+  runtime_doInit(&task);
+  v16 = 1;
+  v20[0] = sub_667D41C0;
+  v20[1] = &v16;
+  v21 = (__int64 (**)(void))v20;
+  v17 = 1;
+  runtime_gcenable();
+  v7 = runtime_makechan();
+  if ( dword_66F58530 )
+    runtime_gcWriteBarrier(v9);
+  else
+    qword_66F01310 = v7;
+  if ( !byte_66ABF045 )
+    goto LABEL_12;
+  if ( !off_66AF44F8 )
+  {
+LABEL_23:
+    runtime_throw(v9, v8);
+    goto LABEL_24;
+  }
+  if ( !off_66AF44E8 )
+  {
+    runtime_throw(v9, v8);
+    goto LABEL_23;
+  }
+  runtime_startTemplateThread();
+  runtime_cgocall(v11, v10);
+LABEL_12:
+  runtime_doInit(&result_0);
+  byte_66F58620 = 0;
+  runtime_closechan();
+  v16 = 0;
+  sub_667DCA80(v12);
+  if ( !byte_66F57FBF && !byte_66ABF050 )
+  {
+    nullsub_52(v13, off_66D25B08);
+    if ( !dword_66F58048 )
+    {
+      if ( dword_66F58040 )
+        runtime_gopark(8LL);
+      runtime_runExitHooks();
+      runtime_exit();
+      while ( 1 )
+        MEMORY[0] = 0;
+    }
+    v18 = 0LL;
+    runtime_mcall();
+  }
+  v17 = 0;
+  return (*v21)();
+}
+```
+
+đặc biệt tại:
+
+<img width="1033" height="331" alt="ảnh" src="https://github.com/user-attachments/assets/e5ba14a0-e480-47de-a600-85256c9a0a60" />
+
+hàm `runtime.doInit` là hàm chạy init task của Go runtime, dùng để chạy các hàm init()
+
+<img width="1014" height="317" alt="ảnh" src="https://github.com/user-attachments/assets/c52e57cf-805b-421a-b0d9-317fcaabe962" />
+
+```
+struct InitTask {
+    uint64 state;
+    uint64 ndeps;
+    uint64 nfns;
+
+    void *deps[ndeps];
+    void (*fns[nfns])();
+};
+```
+
+khi gọi `runtime.doInit`, chương trình sẽ đệ quy liên tục gọi `runtime_doInit((go_init_task *)task->ptrs[ndeps]);`
+
+ta dùng script sau để lấy thứ tự các hàm được gọi:
+
+```python
+import idaapi
+import ida_name
+
+visited = set()
+call_order = []
+
+PTRSZ = 8
+
+def qword(ea):
+    return idaapi.get_qword(ea)
+
+def get_name(ea):
+    n = ida_name.get_name(ea)
+    if not n:
+        n = "sub_%X" % ea
+    return n
+
+def walk_init_task(task_ea):
+    if task_ea in visited:
+        return
+
+    visited.add(task_ea)
+
+    state = qword(task_ea)
+    ndeps = qword(task_ea + 0x8)
+    nfns  = qword(task_ea + 0x10)
+
+    deps_base = task_ea + 0x18
+
+    # recurse dependencies first
+    for i in range(ndeps):
+        dep = qword(deps_base + i * PTRSZ)
+        if dep:
+            walk_init_task(dep)
+
+    # then execute init functions
+    fn_base = deps_base + ndeps * PTRSZ
+
+    for i in range(nfns):
+        fn = qword(fn_base + i * PTRSZ)
+        call_order.append(fn)
+
+def dump_call_order(root_task):
+    visited.clear()
+    call_order.clear()
+
+    walk_init_task(root_task)
+
+    print("=" * 80)
+    print("INIT EXECUTION ORDER")
+    print("=" * 80)
+
+    for idx, fn in enumerate(call_order):
+        print("%3d  %016X  %s" % (
+            idx,
+            fn,
+            get_name(fn)
+        ))
+
+
+ROOT_TASK = 0x66AC48E0
+
+dump_call_order(ROOT_TASK)
+```
+
+```
+  0  00000000667A2B00  internal_bytealg.init.0
+  1  00000000667F3980  runtime.init
+  2  00000000667A44C0  runtime.init.0
+  3  00000000667A7C20  runtime.init.1
+  4  00000000667CBC80  nullsub_33
+  5  00000000667D3420  sub_667D3420
+  6  00000000667D4200  sub_667D4200
+  7  0000000066802640  errors.init
+  8  0000000066805600  sync.init
+  9  0000000066804A20  sync.init.0
+ 10  0000000066805140  sync.init.1
+ 11  0000000066806DA0  sub_66806DA0
+ 12  0000000066808E40  unicode.init
+ 13  000000006680EEA0  sub_6680EEA0
+ 14  00000000668184E0  sub_668184E0
+ 15  0000000066818A40  sub_66818A40
+ 16  0000000066823100  sub_66823100
+ 17  0000000066833CC0  sub_66833CC0
+ 18  000000006683AD80  sub_6683AD80
+ 19  000000006683C980  sub_6683C980
+ 20  0000000066841BC0  sub_66841BC0
+ 21  0000000066841D80  sub_66841D80
+ 22  000000006684F400  sub_6684F400
+ 23  0000000066842140  sub_66842140
+ 24  0000000066855640  sub_66855640
+ 25  00000000668659E0  sub_668659E0
+ 26  0000000066868340  sub_66868340
+ 27  0000000066868800  sub_66868800
+ 28  0000000066869BE0  sub_66869BE0
+ 29  0000000066870F40  sub_66870F40
+ 30  000000006686BE00  sub_6686BE00
+ 31  00000000668714C0  sub_668714C0
+ 32  0000000066879B00  sub_66879B00
+ 33  00000000668734C0  sub_668734C0
+ 34  00000000668773E0  nullsub_44
+ 35  00000000668846A0  sub_668846A0
+ 36  0000000066886C60  sub_66886C60
+ 37  0000000066885340  sub_66885340
+ 38  0000000066887900  sub_66887900
+ 39  0000000066888580  sub_66888580
+ 40  000000006688BC60  sub_6688BC60
+ 41  000000006688FD60  sub_6688FD60
+ 42  00000000668B5F60  sub_668B5F60
+ 43  00000000668C1E20  sub_668C1E20
+ 44  00000000668C3880  sub_668C3880
+ 45  00000000668C5120  sub_668C5120
+ 46  00000000668D8160  sub_668D8160
+ 47  00000000668DBB80  sub_668DBB80
+ 48  00000000668DC000  sub_668DC000
+ 49  00000000668DE6C0  sub_668DE6C0
+ 50  00000000668E1640  sub_668E1640
+ 51  00000000668E2C00  sub_668E2C00
+ 52  00000000668E5F20  sub_668E5F20
+ 53  00000000668E6820  sub_668E6820
+ 54  00000000668F71E0  sub_668F71E0
+ 55  00000000668F7CA0  sub_668F7CA0
+ 56  00000000668FA3A0  sub_668FA3A0
+ 57  00000000668FBFC0  sub_668FBFC0
+ 58  00000000668FCDC0  sub_668FCDC0
+ 59  00000000669010E0  sub_669010E0
+ 60  0000000066901A60  sub_66901A60
+ 61  000000006691F620  sub_6691F620
+ 62  0000000066930440  sub_66930440
+ 63  000000006693A7C0  sub_6693A7C0
+ 64  00000000669392A0  sub_669392A0
+ 65  0000000066948EE0  sub_66948EE0
+ 66  000000006694CE60  sub_6694CE60
+ 67  000000006694E400  sub_6694E400
+ 68  00000000669546A0  sub_669546A0
+ 69  0000000066956820  sub_66956820
+ 70  0000000066957DA0  sub_66957DA0
+ 71  0000000066956EA0  sub_66956EA0
+ 72  000000006695B6C0  sub_6695B6C0
+ 73  000000006695D320  sub_6695D320
+ 74  000000006695FC80  sub_6695FC80
+ 75  000000006695EB20  sub_6695EB20
+ 76  0000000066972DA0  sub_66972DA0
+ 77  000000006696B600  sub_6696B600
+ 78  00000000669748A0  sub_669748A0
+ 79  00000000669788E0  sub_669788E0
+ 80  00000000669B41E0  sub_669B41E0
+ 81  00000000669BAE40  sub_669BAE40
+ 82  00000000669BABA0  sub_669BABA0
+ 83  00000000669BD1E0  sub_669BD1E0
+ 84  00000000669BD2C0  sub_669BD2C0
+ 85  00000000669C6E00  sub_669C6E00
+ 86  00000000669C2980  sub_669C2980
+ 87  00000000669C7F20  sub_669C7F20
+ 88  00000000669C9FC0  sub_669C9FC0
+ 89  00000000669CA140  sub_669CA140
+ 90  00000000669CA980  sub_669CA980
+ 91  00000000669CAE20  sub_669CAE20
+ 92  00000000669CABA0  sub_669CABA0
+ 93  00000000669D22A0  sub_669D22A0
+ 94  00000000669D5E60  sub_669D5E60
+ 95  00000000669D6720  sub_669D6720
+ 96  00000000669DA6E0  sub_669DA6E0
+ 97  00000000669DBA80  sub_669DBA80
+ 98  00000000669DD600  sub_669DD600
+ 99  0000000066A17D80  sub_66A17D80
+100  00000000669EBD80  sub_669EBD80
+101  0000000066A266C0  sub_66A266C0
+102  0000000066A2B500  sub_66A2B500
+103  0000000066A39BE0  sub_66A39BE0
+104  0000000066A39DE0  sub_66A39DE0
+105  0000000066A3A440  sub_66A3A440
+106  0000000066A3A9C0  sub_66A3A9C0
+107  0000000066A3B300  sub_66A3B300
+108  0000000066A3C720  sub_66A3C720
+109  0000000066A4B180  sub_66A4B180
+110  0000000066A5AD80  sub_66A5AD80
+111  0000000066A5A280  sub_66A5A280
+112  0000000066A5BCA0  sub_66A5BCA0
+113  0000000066A5C740  sub_66A5C740
+114  0000000066A5F8C0  sub_66A5F8C0
+115  0000000066A5E020  sub_66A5E020
+116  0000000066A5E5C0  sub_66A5E5C0
+117  0000000066A5E620  sub_66A5E620
+118  0000000066A60C60  sub_66A60C60
+119  0000000066A64000  sub_66A64000
+120  0000000066A645E0  sub_66A645E0
+121  0000000066A64880  sub_66A64880
+122  0000000066A64CC0  sub_66A64CC0
+123  0000000066A64F60  sub_66A64F60
+124  0000000066A676E0  sub_66A676E0
+125  0000000066A679E0  sub_66A679E0
+126  0000000066A68960  sub_66A68960
+127  0000000066A68D40  sub_66A68D40
+128  0000000066A68F00  sub_66A68F00
+129  0000000066A69640  sub_66A69640
+130  0000000066A69A20  sub_66A69A20
+131  0000000066A6A000  sub_66A6A000
+132  0000000066A6E1C0  sub_66A6E1C0
+133  0000000066A6E600  sub_66A6E600
+134  0000000066A6FA00  sub_66A6FA00
+135  0000000066A73AE0  sub_66A73AE0
+136  0000000066A75D80  sub_66A75D80
+137  0000000066A7ABA0  sub_66A7ABA0
+138  0000000066A7EF60  sub_66A7EF60
+139  0000000066A81BE0  sub_66A81BE0
+140  0000000066A81B80  sub_66A81B80
+141  0000000066A82E40  sub_66A82E40
+142  0000000066A88700  sub_66A88700
+143  0000000066A89B40  sub_66A89B40
+144  0000000066A89AE0  sub_66A89AE0
+145  0000000066A8B360  sub_66A8B360
+146  0000000066A8C400  sub_66A8C400
+147  0000000066A918E0  nullsub_51
+148  0000000066A91860  sub_66A91860
+149  0000000066A91A00  sub_66A91A00
+150  0000000066A91A40  sub_66A91A40
+151  0000000066A92C40  sub_66A92C40
+152  0000000066A94C00  sub_66A94C00
+153  0000000066A94DE0  sub_66A94DE0
+154  0000000066A95DC0  sub_66A95DC0
+155  0000000066A955A0  sub_66A955A0
+156  0000000066A96020  sub_66A96020
+157  0000000066A96200  sub_66A96200
+158  0000000066A97500  sub_66A97500
+159  0000000066A97240  sub_66A97240
+160  0000000066A99200  sub_66A99200
+161  0000000066A99160  sub_66A99160
+162  0000000066A99540  sub_66A99540
+163  0000000066A99D00  sub_66A99D00
+164  0000000066A99E60  sub_66A99E60
+165  0000000066AA3B20  sub_66AA3B20
+166  0000000066A9A2C0  sub_66A9A2C0
+167  0000000066A9A560  sub_66A9A560
+168  0000000066A9A960  sub_66A9A960
+169  0000000066A9AC00  sub_66A9AC00
+170  0000000066A9CE60  sub_66A9CE60
+171  0000000066A9DC20  sub_66A9DC20
+172  0000000066A9E000  sub_66A9E000
+173  0000000066A9E1C0  sub_66A9E1C0
+174  0000000066A9E900  sub_66A9E900
+175  0000000066A9ECE0  sub_66A9ECE0
+176  0000000066A9F3C0  sub_66A9F3C0
+177  0000000066AA3900  sub_66AA3900
+178  0000000066AA5F60  sub_66AA5F60
+179  0000000066AA9480  sub_66AA9480
+180  0000000066AA9600  sub_66AA9600
+181  0000000066AB1700  sub_66AB1700
+182  0000000066AB9DE0  sub_66AB9DE0
+```
+
+do có rất nhiều hàm mà phần lớn đều là thao tác với các strings nên ta chỉ phân tích hàm quan trọng là `sub_66AB9DE0`
+
+<img width="729" height="358" alt="ảnh" src="https://github.com/user-attachments/assets/b8eef215-57d3-4db2-a6a5-3115ed15b27a" />
+
+hàm `decode_embedded_config_blob` decrypt 1 blob 0x5000 bytes bằng AES CBC với key và IV là 16bytes đầu 
+
+<img width="958" height="313" alt="ảnh" src="https://github.com/user-attachments/assets/d2bc71d3-7423-413e-96d2-459afbe324c5" />
+
+hàm `start_client_reverse_mode` khả năng là reverse shell đên c2
+
 
 
 
